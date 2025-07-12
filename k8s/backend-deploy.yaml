@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: sebasr0/zeroshot-backend:0.1.0
+          image: sebasr0/zeroshot-backend:0.1.1
           ports:
             - containerPort: 8000
           resources:
