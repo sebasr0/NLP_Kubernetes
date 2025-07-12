@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zeroshot-frontend
+  labels:
+    app: zeroshot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zeroshot-frontend
+  template:
+    metadata:
+      labels:
+        app: zeroshot-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: zeroshot-frontend:latest
+          ports:
+            - containerPort: 8501
+          env:
+            - name: API_URL
+              value: http://zeroshot-backend:8000
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8501
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zeroshot-frontend
+spec:
+  selector:
+    app: zeroshot-frontend
+  ports:
+    - port: 80
+      targetPort: 8501
+  type: NodePort

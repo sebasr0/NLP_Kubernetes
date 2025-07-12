@@ -1,0 +1,5 @@
+streamlit==1.35.0
+requests==2.32.3
+pandas==2.2.2
+sqlalchemy==2.0.30
+pymysql==1.1.0

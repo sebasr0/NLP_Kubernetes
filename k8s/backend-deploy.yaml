@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zeroshot-backend
+  labels:
+    app: zeroshot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zeroshot-backend
+  template:
+    metadata:
+      labels:
+        app: zeroshot-backend
+    spec:
+      containers:
+        - name: backend
+          image: zeroshot-backend:latest  # built locally via minikube docker-env
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: db-secret
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zeroshot-backend
+spec:
+  selector:
+    app: zeroshot-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+  type: ClusterIP
