@@ -16,12 +16,19 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: zeroshot-frontend:latest
+          image: sebasr0/zeroshot-frontend:0.1.0
           ports:
             - containerPort: 8501
           env:
             - name: API_URL
               value: http://zeroshot-backend:8000
+          resources:
+            requests:
+               cpu: "100m"
+               memory: "128Mi"
+            limits:
+               cpu: "200m"
+               memory: "384Mi"
           readinessProbe:
             httpGet:
               path: /

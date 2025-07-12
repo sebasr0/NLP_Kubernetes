@@ -10,13 +10,6 @@ from sqlalchemy import create_engine, text as sa_text
 # Configuration
 # ---------------------------------------------------------------------------
 API_URL = os.getenv("API_URL", "http://localhost:8000")  # Overridden in docker-compose
-# DB connection vars (internal Docker DNS defaults)
-DB_HOST = os.environ.get("DB_HOST")
-DB_PORT = os.environ.get("DB_PORT")
-DB_USER = os.environ.get("DB_USER")
-DB_PASSWORD = os.environ.get("DB_PASSWORD")
-DB_NAME = os.environ.get("DB_NAME")
-DB_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 DEFAULT_LABELS = [
     "Analyst Update",
@@ -51,15 +44,6 @@ st.set_page_config(
 )
 
 st.title("🔮 Zero-Shot Text Classifier")
-
-@st.cache_resource(show_spinner=False)
-def get_engine():
-    try:
-        return create_engine(DB_URL, pool_pre_ping=True)
-    except Exception as e:
-        st.warning(f"No se pudo conectar a la base de datos: {e}")
-        return None
-st.caption("Clasifica texto en tópicos financieros usando BART Large M-NLI.")
 
 # ---------------------------------------------------------------------------
 # Sidebar settings
@@ -120,7 +104,7 @@ st.markdown("---")
 st.header("📊 Estadísticas históricas")
 if st.button("Actualizar estadísticas"):
     try:
-        resp = requests.get((custom_api.strip() or API_URL).rstrip("/") + "/stats", timeout=30)
+        resp = requests.get((custom_api.strip() or API_URL).rstrip("/") + "/stats", timeout=60)
         resp.raise_for_status()
         stats_json = resp.json()
         if not stats_json.get("counts"):

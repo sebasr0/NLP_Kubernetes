@@ -16,9 +16,16 @@ spec:
     spec:
       containers:
         - name: backend
-          image: zeroshot-backend:latest  # built locally via minikube docker-env
+          image: sebasr0/zeroshot-backend:0.1.0
           ports:
             - containerPort: 8000
+          resources:
+            requests:
+              cpu: "2"
+              memory: "2Gi"
+            limits:
+              cpu: "2"
+              memory: "3Gi"
           envFrom:
             - secretRef:
                 name: db-secret
