@@ -37,8 +37,9 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to ECR
-        run: aws ecr get-login-password --region $AWS_REGION \
-             | docker login --username AWS --password-stdin $ECR_REGISTRY
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | 
+            docker login --username AWS --password-stdin $ECR_REGISTRY
 
       - name: Build & push Backend
         run: |
