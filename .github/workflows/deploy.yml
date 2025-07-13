@@ -1,0 +1,68 @@
+name: Build & Deploy to ECS Fargate
+
+on:
+  workflow_dispatch:
+    inputs:
+      aws-access-key:
+        description: "AWS_ACCESS_KEY_ID (sesión)"
+        required: true
+      aws-secret-key:
+        description: "AWS_SECRET_ACCESS_KEY (sesión)"
+        required: true
+      aws-session:
+        description: "AWS_SESSION_TOKEN"
+        required: true
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: 571600866805.dkr.ecr.us-east-1.amazonaws.com
+  BACKEND_REPO: zeroshot-backend
+  FRONT_REPO: zeroshot-frontend
+  STACK_NAME: zeroshot-stack
+  TEMPLATE_FILE: aws/cloudformation3.yaml
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS creds (token sesión)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:   ${{ github.event.inputs.aws-access-key }}
+          aws-secret-access-key: ${{ github.event.inputs.aws-secret-key }}
+          aws-session-token:   ${{ github.event.inputs.aws-session }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        run: aws ecr get-login-password --region $AWS_REGION \
+             | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+      - name: Build & push Backend
+        run: |
+          TAG=${GITHUB_SHA::7}
+          docker build -t $BACKEND_REPO:$TAG -f app/Dockerfile ./app
+          docker tag  $BACKEND_REPO:$TAG  $ECR_REGISTRY/$BACKEND_REPO:$TAG
+          docker push $ECR_REGISTRY/$BACKEND_REPO:$TAG
+        env: { DOCKER_BUILDKIT: 1 }
+
+      - name: Build & push Frontend
+        run: |
+          TAG=${GITHUB_SHA::7}
+          docker build -t $FRONT_REPO:$TAG -f frontend/Dockerfile ./frontend
+          docker tag  $FRONT_REPO:$TAG  $ECR_REGISTRY/$FRONT_REPO:$TAG
+          docker push $ECR_REGISTRY/$FRONT_REPO:$TAG
+        env: { DOCKER_BUILDKIT: 1 }
+
+      - name: Deploy / Update CloudFormation
+        run: |
+          TAG=${GITHUB_SHA::7}
+          aws cloudformation deploy \
+            --stack-name $STACK_NAME \
+            --template-file $TEMPLATE_FILE \
+            --parameter-overrides \
+              ImageBackend=$ECR_REGISTRY/$BACKEND_REPO:$TAG \
+              ImageFrontend=$ECR_REGISTRY/$FRONT_REPO:$TAG \
+            --capabilities CAPABILITY_NAMED_IAM
