@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, APIRouter
 from pydantic import BaseModel
 from transformers import pipeline, Pipeline
 from typing import List, Optional
@@ -56,6 +56,7 @@ _engine = None
 # FastAPI application
 # ---------------------------------------------------------------------------
 app = FastAPI(title="Zero-Shot Classification API", version="1.0.0")
+router = APIRouter(prefix="/api")
 
 # Pydantic models for request/response
 class ClassifyRequest(BaseModel):
@@ -120,7 +121,7 @@ def healthz():
     return {"status": "ok"}
 
 
-@app.post("/classify", response_model=ClassifyResponse)
+@router.post("/classify", response_model=ClassifyResponse)
 def classify(req: ClassifyRequest):
     if not req.text:
         raise HTTPException(status_code=400, detail="Field 'text' is required")
@@ -154,7 +155,7 @@ def classify(req: ClassifyRequest):
     return ClassifyResponse(**result)
 
 
-@app.get("/stats")
+@router.get("/stats")
 def get_stats():
     """Return aggregated statistics about predictions."""
     if _engine is None:
@@ -168,3 +169,8 @@ def get_stats():
         return {"total": int(total or 0), "last_timestamp": last_ts, "counts": counts}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"DB error: {e}")
+
+# ---------------------------------------------------------------------------
+# Register router
+# ---------------------------------------------------------------------------
+app.include_router(router)
