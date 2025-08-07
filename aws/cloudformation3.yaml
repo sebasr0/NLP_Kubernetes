@@ -141,7 +141,7 @@ Resources:
     Type: AWS::RDS::DBInstance
     Properties:
       Engine: mysql
-      EngineVersion: 8.0.36
+      EngineVersion: 8.0.35
       DBInstanceClass: db.t3.micro
       AllocatedStorage: 20
       DBName: zeroshot          # <-- crea la DB al provisionar
